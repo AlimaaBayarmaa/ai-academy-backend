@@ -10,6 +10,10 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# Contract PDFs are filled with a bold Cyrillic font (app/services/contracts/pdf/).
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

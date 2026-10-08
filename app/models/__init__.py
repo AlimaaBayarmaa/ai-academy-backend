@@ -20,6 +20,7 @@ from .cohort import (  # noqa: F401
     Cohort,
     CohortLegacySchedule,
 )
+from .contract import CONTRACT_STATUSES, StudentContract  # noqa: F401
 from .course import COURSE_LEVELS, COURSE_STATUSES, Course  # noqa: F401
 from .ebarimt import EBARIMT_STATUSES, EBARIMT_TYPES, EBarimtReceipt  # noqa: F401
 from .engagement import (  # noqa: F401

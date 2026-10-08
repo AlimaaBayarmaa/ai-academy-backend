@@ -89,6 +89,22 @@ Admins set or clear the override with `PATCH /admin/students/{id}` `{"ui_mode": 
 | GET | `/me/certificates/{cert_number}/download` | S |
 | GET | `/certificates/verify/{cert_number}` | — (public check page) |
 
+## 6a. E-contracts — see `docs/e_contract_api_v1.md`
+
+Signed **in the app**: check details → preview PDF → agree + draw signature → signed PDF.
+One contract per enrollment, created automatically when the course has a PDF contract template.
+
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| GET | `/me/contracts` | S | all mine, newest first; `can_sign`, `is_current` |
+| GET | `/me/contracts/{id}` | S | prefilled `form`, `rules`, `finance` |
+| POST | `/me/contracts/{id}/preview` | S | `{form}` → `application/pdf`, unsigned |
+| POST | `/me/contracts/{id}/sign` | S | `{form, agreed: true, signature}`; `pending` → `signed` |
+| GET | `/me/contracts/{id}/download` | S | `{url, expires_at}` once signed |
+| GET | `/admin/contracts`, `/admin/contracts/{id}` | staff:cohort:manage | `?course_id=&cohort_id=&student_id=&status=` |
+| GET | `/admin/contracts/{id}/download` | staff:cohort:manage | |
+| POST | `/admin/contracts/{id}/reset` | staff:cohort:manage | signed → pending (student signs again) |
+
 ## 7. Money
 
 | Method | Path | Who | Notes |

@@ -175,6 +175,10 @@
     {
       "key": "qr_token",
       "value": ""
+    },
+    {
+      "key": "contract_id",
+      "value": ""
     }
   ],
   "item": [
@@ -1839,6 +1843,143 @@
                     "me",
                     "certificates",
                     "{{cert_number}}",
+                    "download"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contracts",
+          "item": [
+            {
+              "name": "My contracts",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/contracts",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "contracts"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var j = pm.response.json();",
+                      "if (j.contracts && j.contracts.length) pm.collectionVariables.set('contract_id', j.contracts[0].id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Contract detail (form, rules, finance)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/contracts/{{contract_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "contracts",
+                    "{{contract_id}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Preview contract PDF (unsigned)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/me/contracts/{{contract_id}}/preview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "contracts",
+                    "{{contract_id}}",
+                    "preview"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"form\": {\n    \"last_name\": \"Дорж\",\n    \"first_name\": \"Бат\",\n    \"register\": \"УБ12345678\",\n    \"phone\": \"99112233\",\n    \"email\": \"bat@example.mn\",\n    \"address\": \"Улаанбаатар хот, Сүхбаатар дүүрэг, 1-р хороо\",\n    \"final_payment_date\": \"2026-11-15\",\n    \"guardian_relation\": \"\",\n    \"guardian_last_name\": \"\",\n    \"guardian_first_name\": \"\",\n    \"guardian_register\": \"\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Sign contract",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/me/contracts/{{contract_id}}/sign",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "contracts",
+                    "{{contract_id}}",
+                    "sign"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"form\": {\n    \"last_name\": \"Дорж\",\n    \"first_name\": \"Бат\",\n    \"register\": \"УБ12345678\",\n    \"phone\": \"99112233\",\n    \"email\": \"bat@example.mn\",\n    \"address\": \"Улаанбаатар хот, Сүхбаатар дүүрэг, 1-р хороо\",\n    \"final_payment_date\": \"2026-11-15\",\n    \"guardian_relation\": \"\",\n    \"guardian_last_name\": \"\",\n    \"guardian_first_name\": \"\",\n    \"guardian_register\": \"\"\n  },\n  \"agreed\": true,\n  \"signature\": \"data:image/png;base64,<drawn signature PNG>\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Download signed contract",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/contracts/{{contract_id}}/download",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "contracts",
+                    "{{contract_id}}",
                     "download"
                   ]
                 }
@@ -4046,6 +4187,106 @@
                     "admin",
                     "certificates",
                     "{{cert_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contracts (cohort:manage)",
+          "item": [
+            {
+              "name": "List contracts",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/contracts?status=signed&course_id={{course_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "contracts"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "signed"
+                    },
+                    {
+                      "key": "course_id",
+                      "value": "{{course_id}}"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var j = pm.response.json();",
+                      "if (j.contracts && j.contracts.length) pm.collectionVariables.set('contract_id', j.contracts[0].id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Contract detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/contracts/{{contract_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "contracts",
+                    "{{contract_id}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Download contract PDF",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/contracts/{{contract_id}}/download",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "contracts",
+                    "{{contract_id}}",
+                    "download"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Reset signing (back to pending)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/contracts/{{contract_id}}/reset",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "contracts",
+                    "{{contract_id}}",
+                    "reset"
                   ]
                 }
               }

@@ -18,6 +18,7 @@ student side and a staff/teacher side:
 - quizzes / quizzes_staff         : quiz attempts graded per answer, authoring
 - account                         : /me money, receipts, profile; password reset
 - certificates                    : student certificates, staff issuing
+- contracts                       : student e-contracts (sign in the app), staff reset
 - attendance                      : class sessions, QR check-in, rosters
 - notifications                   : push tokens, in-app notifications
 """
@@ -31,6 +32,7 @@ def register_blueprints(app):
     from .attendance import bp as attendance_bp
     from .auth import bp as auth_bp
     from .certificates import bp as certificates_bp
+    from .contracts import bp as contracts_bp
     from .ebarimt import bp as ebarimt_bp
     from .health import bp as health_bp
     from .learning import bp as learning_bp
@@ -46,6 +48,6 @@ def register_blueprints(app):
     for blueprint in (health_bp, auth_bp, public_bp, student_bp, teacher_bp,
                       admin_bp, payments_bp, ebarimt_bp,
                       learning_bp, learning_admin_bp, assignments_bp, assignments_staff_bp,
-                      quizzes_bp, quizzes_staff_bp, account_bp, certificates_bp,
+                      quizzes_bp, quizzes_staff_bp, account_bp, certificates_bp, contracts_bp,
                       attendance_bp, notifications_bp):
         app.register_blueprint(blueprint)
