@@ -123,7 +123,8 @@ def test_issued_certificate_is_reported(client, earned, admin_headers):
     assert body["status"] == "issued"
     cert = body["certificate"]
     assert cert["cert_number"].startswith("AIAA-") and cert["has_file"] is False
-    assert cert["verify_url"].endswith(f"/certificates/verify/{cert['cert_number']}")
+    assert cert["can_download"] is False  # no template on the course, no upload yet
+    assert f"/certificates/verify/{cert['cert_number']}?code=" in cert["verify_url"]
 
 
 def test_status_access_rules(client, make_student, make_course, make_teacher, earned):

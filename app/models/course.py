@@ -84,6 +84,19 @@ class Course(db.Model):
     )
 
     # --- derived ---
+    @staticmethod
+    def _is_pdf(key) -> bool:
+        return bool(key) and key.lower().endswith(".pdf")
+
+    @property
+    def has_pdf_cert_template(self) -> bool:
+        """Certificates can be generated from it (a .doc/.docx stays a reference file)."""
+        return self._is_pdf(self.cert_template_key)
+
+    @property
+    def has_pdf_contract_template(self) -> bool:
+        return self._is_pdf(self.contract_template_key)
+
     @property
     def is_public(self) -> bool:
         return self.status in ("open", "closed")

@@ -48,13 +48,24 @@ class Certificate(db.Model):
         c = self.course
         return {"mn": c.title_mn, "en": c.title_en} if c is not None else None
 
+    @property
+    def current_verify_url(self) -> str:
+        from app.services.certificates.verification import verify_url
+
+        return verify_url(self.cert_number)
+
     def to_student_dict(self) -> dict:
         """What the student app sees (§2.9 ``certificate``)."""
         return {
             "cert_number": self.cert_number,
             "issued_at": iso(self.issued_at),
-            "verify_url": self.verify_url,
+            # Built, not read from the column: links stored before the QR code was
+            # added would not show the holder's name.
+            "verify_url": self.current_verify_url,
             "has_file": bool(self.file_key),
+            # The PDF is made on the first download when the course has a template.
+            "can_download": bool(self.file_key) or (
+                self.course is not None and self.course.has_pdf_cert_template),
         }
 
     def to_dict(self) -> dict:

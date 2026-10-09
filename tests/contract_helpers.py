@@ -115,12 +115,12 @@ def stored(s3, contract_id, suffix) -> tuple:
 
 @pytest.fixture
 def s3(monkeypatch):
-    from app.services.contracts import core
+    from app.storage import read_template
 
-    core._fetch.cache_clear()  # the template cache is per process; tests swap templates
+    read_template.cache_clear()  # the template cache is per process; tests swap templates
     fake = FakeS3()
-    for target in ("core.download_stream", "student.upload_fileobj", "student.presigned_url",
-                   "staff.delete_object"):
+    monkeypatch.setattr("app.storage.s3.download_stream", fake.download_stream)
+    for target in ("student.upload_fileobj", "student.presigned_url", "staff.delete_object"):
         name = target.split(".")[1]
         monkeypatch.setattr(f"app.services.contracts.{target}", getattr(fake, name))
     return fake

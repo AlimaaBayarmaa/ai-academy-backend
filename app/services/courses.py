@@ -15,6 +15,7 @@ from app.storage import (
     download_stream,
     upload_fileobj,
 )
+from app.timeutil import utcnow
 
 from .errors import ServiceError
 
@@ -172,6 +173,9 @@ def upload_template(course, kind, file, *, content_length, max_bytes) -> str:
     previous = getattr(course, key_col)
     setattr(course, key_col, key)
     setattr(course, name_col, file.filename)
+    # Same name, same key, same columns: bump the version so cached copies of the
+    # old file (app.storage.read_template) are not used for the new one.
+    course.updated_at = utcnow()
     db.session.commit()
     # A new extension means a new key; the old object would sit in the bucket
     # unreferenced. Best-effort, after the commit: a failed delete leaves an

@@ -15,6 +15,8 @@ from app.timeutil import iso, utcnow
 from ..errors import ServiceError
 from ..params import get_by_id, parse_id, parse_limit
 from .eligibility import is_eligible, requirements
+from .generation import generate, generate_if_possible, has_template
+from .verification import verify_url
 
 DOWNLOAD_TTL = 300  # seconds a pre-signed download link stays valid
 DEFAULT_MAX_BYTES = 20 * 1024 * 1024
@@ -38,13 +40,6 @@ def list_certificates(*, course_id=None, student_id=None, limit=None) -> list:
     return [c.to_dict() for c in rows.limit(parse_limit(limit))]
 
 
-def verify(cert_number) -> dict:
-    cert = Certificate.query.filter_by(cert_number=str(cert_number), is_archived=False).first()
-    if cert is None:
-        raise ServiceError(404, "certificate_not_found")
-    return cert.to_verify_dict()
-
-
 # ------------------------------------------------------------------- issuing
 def _enrollment(student_id, course_id):
     """The student's active enrollment in the course (newest cohort), or ``None``."""
@@ -61,11 +56,6 @@ def _next_number(year: int) -> str:
             .filter(Certificate.cert_number.like(f"{prefix}%")).scalar())
     seq = int(last[len(prefix):]) + 1 if last and last[len(prefix):].isdigit() else 1
     return f"{prefix}{seq:05d}"
-
-
-def _verify_url(cert_number: str) -> str:
-    base = (current_app.config.get("PUBLIC_BASE_URL") or "").rstrip("/")
-    return f"{base}/certificates/verify/{cert_number}"
 
 
 def issue(student_id, course_id, *, force=False) -> Certificate:
@@ -97,18 +87,20 @@ def issue(student_id, course_id, *, force=False) -> Certificate:
         cert = Certificate(
             student_id=student.id, course_id=course.id,
             enrollment_id=enrollment.id if enrollment is not None else None,
-            cert_number=number, verify_url=_verify_url(number),
+            cert_number=number, verify_url=verify_url(number),
             payment_cleared=reqs["payment_cleared"]["done"], issued_at=utcnow(),
         )
         db.session.add(cert)
         try:
             db.session.commit()
-            return cert
         except IntegrityError:
             db.session.rollback()
             if Certificate.query.filter_by(student_id=student.id,
                                            course_id=course.id).first() is not None:
                 raise ServiceError(409, "already_issued") from None
+            continue
+        generate_if_possible(cert)
+        return cert
     raise ServiceError(503, "certificate_number_busy")
 
 
@@ -144,7 +136,9 @@ def student_download(student_id, cert_number) -> dict:
     if cert is None:
         raise ServiceError(404, "certificate_not_found")
     if not cert.file_key:
-        raise ServiceError(404, "certificate_file_missing")
+        if not has_template(cert.course):
+            raise ServiceError(404, "certificate_file_missing")
+        generate(cert)  # issued before the course had a template
     try:
         url = presigned_url(cert.file_key, expires=DOWNLOAD_TTL)
     except S3StorageError:

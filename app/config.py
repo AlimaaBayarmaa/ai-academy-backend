@@ -99,6 +99,9 @@ class Config:
     # provider's servers). Defaults to the live API host.
     PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://api.ai-academy.asia")
     PAYMENT_HTTP_TIMEOUT = int(os.getenv("PAYMENT_HTTP_TIMEOUT", "20"))
+    # Signs the code in a certificate's QR / verify link, so certificate numbers
+    # cannot be walked to read students' names. Falls back to SECRET_KEY.
+    CERT_SIGNING_SECRET = os.getenv("CERT_SIGNING_SECRET") or SECRET_KEY
     # Demo/QA switch: settle every checkout instantly, with no gateway and no
     # money, so the rest of the flow (seat, ledger, eBarimt receipt) can be
     # exercised while merchant credentials are pending. NEVER in production —

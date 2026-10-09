@@ -9,7 +9,6 @@ signed one stays signed — it is a record of what was agreed.
 """
 from __future__ import annotations
 
-import functools
 from decimal import Decimal
 
 from sqlalchemy import or_, text
@@ -18,7 +17,7 @@ from sqlalchemy.orm import contains_eager
 
 from app.extensions import db
 from app.models import Cohort, Course, Enrollment, StudentContract, StudentLedger
-from app.storage import S3StorageError, download_stream
+from app.storage import S3StorageError, read_template
 from app.timeutil import utcnow
 
 from ..errors import ServiceError
@@ -27,8 +26,7 @@ from .pdf import TemplateError, fill_contract
 
 
 def has_pdf_template(course) -> bool:
-    key = course.contract_template_key if course is not None else None
-    return bool(key) and key.lower().endswith(".pdf")
+    return course is not None and course.has_pdf_contract_template
 
 
 def _new_contract(enr, year: int) -> StudentContract:
@@ -131,19 +129,12 @@ def rules(contract: StudentContract, money: dict, today) -> dict:
 
 
 # ------------------------------------------------------------------- PDF
-@functools.lru_cache(maxsize=4)
-def _fetch(key: str, updated_at) -> bytes:
-    """One S3 read per template upload, per worker (``updated_at`` moves on re-upload)."""
-    stream, _ = download_stream(key)
-    return stream.read()
-
-
 def load_template(contract: StudentContract) -> bytes:
     course = contract.course
     if not has_pdf_template(course):
         raise ServiceError(409, "contract_template_missing")
     try:
-        return _fetch(course.contract_template_key, course.updated_at)
+        return read_template(course.contract_template_key, course.updated_at)
     except S3StorageError:
         raise ServiceError(502, "storage_error") from None
 

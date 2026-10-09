@@ -32,7 +32,8 @@ def test_issue_eligible_student(client, db, earned, admin_headers):
     body = resp.get_json()
     year = body["issued_at"][:4]
     assert body["cert_number"] == f"AIAA-{year}-00001"
-    assert body["verify_url"] == f"http://testserver/certificates/verify/AIAA-{year}-00001"
+    assert body["verify_url"].startswith(
+        f"http://testserver/certificates/verify/AIAA-{year}-00001?code=")
     assert body["payment_cleared"] is True and body["enrollment_id"] == enr.id
     assert body["student_name"] == "Bat Dorj" and body["course_title"]["en"] == "Leaders"
     [row] = _rows(db, Certificate)
@@ -191,12 +192,19 @@ def test_verify_public(client, earned, admin_headers):
     account, _, course, _ = earned
     cert = _issue(client, admin_headers, student_id=account.actor_id,
                   course_id=course.id).get_json()
-    resp = client.get(f"/certificates/verify/{cert['cert_number']}")
+    # The QR's link carries the code: then the page says whose certificate it is.
+    path = cert["verify_url"].removeprefix("http://testserver")
+    resp = client.get(path)
     assert resp.status_code == 200
     assert resp.get_json() == {
         "valid": True, "cert_number": cert["cert_number"], "student_name": "Bat Dorj",
         "course_title": {"mn": course.title_mn, "en": "Leaders"},
         "issued_at": cert["issued_at"],
     }
+    # Without it (or with a wrong one) a guessed number reveals no one.
+    for suffix in ("", "?code=0000000000000000"):
+        resp = client.get(f"/certificates/verify/{cert['cert_number']}{suffix}")
+        assert resp.get_json() == {"valid": True, "cert_number": cert["cert_number"],
+                                   "issued_at": cert["issued_at"], "details_hidden": True}
     resp = client.get("/certificates/verify/AIAA-2026-99999")
     assert resp.status_code == 404 and resp.get_json()["error"] == "certificate_not_found"

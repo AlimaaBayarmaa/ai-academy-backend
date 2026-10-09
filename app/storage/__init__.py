@@ -7,6 +7,7 @@ from .s3 import (
     presigned_url,
     upload_fileobj,
 )
+from .templates import read_template
 
 __all__ = [
     "S3StorageError",
@@ -14,5 +15,6 @@ __all__ = [
     "delete_object",
     "download_stream",
     "presigned_url",
+    "read_template",
     "upload_fileobj",
 ]

@@ -81,13 +81,14 @@ Admins set or clear the override with `PATCH /admin/students/{id}` `{"ui_mode": 
 | POST | `/me/quiz-attempts/{id}/finish` | S |
 | GET | `/me/quiz-attempts/{id}` | S |
 
-## 6. Certificates (contract §2.9)
+## 6. Certificates (contract §2.9) — details: `docs/certificate_api_v1.md`
 
 | Method | Path | Who |
 |---|---|---|
+| GET | `/me/certificates` | S — one card per course: status, requirements, certificate |
 | GET | `/me/courses/{slug}/certificate` | S |
-| GET | `/me/certificates/{cert_number}/download` | S |
-| GET | `/certificates/verify/{cert_number}` | — (public check page) |
+| GET | `/me/certificates/{cert_number}/download` | S — 5-min PDF link; generated from the course template on first use |
+| GET | `/certificates/verify/{cert_number}?code=` | — (the QR; name shown only with the code; HTML for browsers) |
 
 ## 6a. E-contracts — see `docs/e_contract_api_v1.md`
 
@@ -159,7 +160,9 @@ FCM starts once `FCM_CREDENTIALS` is configured (`app/services/notifications/pus
 | GET / PATCH / DELETE | `/admin/quizzes/{id}` | staff:course:edit |
 | PUT | `/admin/quizzes/{id}/questions` | staff:course:edit (replaces the set; `?force=true` if attempts exist) |
 | GET | `/admin/quizzes/{id}/attempts` | staff:course:edit |
-| GET / POST | `/admin/certificates` | staff:cohort:manage (issue checks eligibility unless `force`) |
+| GET / POST | `/admin/certificates` | staff:cohort:manage (issue checks eligibility unless `force`; PDF made from the course template) |
+| POST | `/admin/certificates/{id}/generate` | staff:cohort:manage (rebuild the PDF) |
+| POST | `/admin/cohorts/{id}/certificates` | staff:cohort:manage (issue a whole class; `{force?, student_ids?}`) |
 | PUT | `/admin/certificates/{id}/file` | staff:cohort:manage (PDF ≤ 20 MB) |
 | DELETE | `/admin/certificates/{id}` | staff:cohort:manage (archives) |
 

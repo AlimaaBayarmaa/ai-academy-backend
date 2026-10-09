@@ -179,6 +179,10 @@
     {
       "key": "contract_id",
       "value": ""
+    },
+    {
+      "key": "cert_code",
+      "value": ""
     }
   ],
   "item": [
@@ -977,7 +981,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/certificates/verify/{{cert_number}}",
+                  "raw": "{{base_url}}/certificates/verify/{{cert_number}}?code={{cert_code}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -985,6 +989,12 @@
                     "certificates",
                     "verify",
                     "{{cert_number}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "code",
+                      "value": "{{cert_code}}"
+                    }
                   ]
                 },
                 "auth": {
@@ -1798,6 +1808,36 @@
         {
           "name": "Certificates",
           "item": [
+            {
+              "name": "My certificates (one card per course)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/certificates",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "certificates"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var j = pm.response.json();",
+                      "var hit = (j.certificates||[]).find(function(c){return c.certificate;});",
+                      "if (hit) pm.collectionVariables.set('cert_number', hit.certificate.cert_number);"
+                    ]
+                  }
+                }
+              ]
+            },
             {
               "name": "My certificate status",
               "request": {
@@ -4188,6 +4228,58 @@
                     "certificates",
                     "{{cert_id}}"
                   ]
+                }
+              }
+            },
+            {
+              "name": "Generate / regenerate certificate PDF",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/certificates/{{cert_id}}/generate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "certificates",
+                    "{{cert_id}}",
+                    "generate"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Issue a whole class (cohort)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/cohorts/{{cohort_id}}/certificates",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "cohorts",
+                    "{{cohort_id}}",
+                    "certificates"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"force\": false,\n  \"student_ids\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 }
               }
             }

@@ -1,14 +1,17 @@
 """Student certificates, staff issuing and public verification (contract §2.9).
 
-- student : ``/me/courses/<slug>/certificate``, ``/me/certificates/<n>/download``
-- staff   : ``/admin/certificates`` (``cohort:manage``; super_admin via wildcard)
-- public  : ``/certificates/verify/<n>`` — no Authorization header
+- student : ``/me/certificates``, ``/me/courses/<slug>/certificate``,
+            ``/me/certificates/<n>/download``
+- staff   : ``/admin/certificates`` (+ ``/generate``), ``/admin/cohorts/<id>/certificates``
+            (``cohort:manage``; super_admin via wildcard)
+- public  : ``/certificates/verify/<n>?code=`` — no Authorization header; HTML for browsers
 """
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, Response, g, jsonify, request
 
 from app.auth import actor_required, require_permission
 from app.services import access
 from app.services import certificates as cert_svc
+from app.services.errors import ServiceError
 
 from ._shared import body
 
@@ -23,6 +26,12 @@ def my_course_certificate(course_slug):
     course = access.course_by_slug(course_slug)
     enrollment = access.enrollment_for_course(student_id, course.id)
     return jsonify(cert_svc.certificate_status(student_id, course, enrollment))
+
+
+@bp.get("/me/certificates")
+@actor_required("student")
+def my_certificates():
+    return jsonify(cert_svc.my_certificates(g.current_user.actor_id))
 
 
 @bp.get("/me/certificates/<cert_number>/download")
@@ -50,6 +59,20 @@ def issue_certificate():
     return jsonify(cert.to_dict()), 201
 
 
+@bp.post("/admin/certificates/<cert_id>/generate")
+@require_permission("cohort:manage")
+def generate_certificate_file(cert_id):
+    return jsonify(cert_svc.generate(cert_svc.get_certificate(cert_id)).to_dict())
+
+
+@bp.post("/admin/cohorts/<cohort_id>/certificates")
+@require_permission("cohort:manage")
+def issue_cohort_certificates(cohort_id):
+    data = body()
+    return jsonify(cert_svc.issue_for_cohort(
+        cohort_id, force=data.get("force") is True, student_ids=data.get("student_ids")))
+
+
 @bp.put("/admin/certificates/<cert_id>/file")
 @require_permission("cohort:manage")
 def upload_certificate_file(cert_id):
@@ -68,4 +91,14 @@ def archive_certificate(cert_id):
 # ------------------------------------------------------------------- public
 @bp.get("/certificates/verify/<cert_number>")
 def verify_certificate(cert_number):
-    return jsonify(cert_svc.verify(cert_number))
+    """JSON for API clients; an HTML page for a phone that scanned the QR."""
+    wants_html = request.accept_mimetypes.best == "text/html"
+    try:
+        data = cert_svc.verify(cert_number, request.args.get("code"))
+    except ServiceError:
+        if not wants_html:
+            raise
+        return Response(cert_svc.verify_page(None), status=404, mimetype="text/html")
+    if wants_html:
+        return Response(cert_svc.verify_page(data), mimetype="text/html")
+    return jsonify(data)
