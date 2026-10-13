@@ -130,9 +130,15 @@ One contract per enrollment, created automatically when the course has a PDF con
 | GET | `/teacher/sessions/{id}/attendance` | T, staff:cohort:manage | roster with status |
 | PUT | `/teacher/sessions/{id}/attendance/{student_id}` | T, staff:cohort:manage | manual mark |
 | GET | `/teacher/cohorts/{id}/students` | T, staff:cohort:manage | class list |
-| GET | `/teachers/{id}/schedule` | T (self), staff | |
+| GET | `/teachers/{id}/schedule` | T (self), staff | + `covering_sessions` (accepted handovers) |
+| GET | `/teacher/sessions?from=&to=` | T | own sessions (`regular`) + covered ones (`covering`) |
+| GET | `/teacher/sessions/{id}/eligible-teachers` | T (cohort's teacher) | handover recipients |
+| GET / POST | `/teacher/schedule-change-requests` | T | `?direction=sent\|received&status=` |
+| GET | `/teacher/schedule-change-requests/{id}` | T (sender/recipient) | |
+| POST | `/teacher/schedule-change-requests/{id}/accept\|reject\|cancel` | T | recipient / recipient / sender |
 
 A session's `topic_id` is what dates a module on the learning path (and locks it until then).
+Class handover (schedule-change) requests: see `docs/schedule_change_api_v1.md`.
 
 ## 9. Notifications
 

@@ -21,6 +21,7 @@ student side and a staff/teacher side:
 - contracts                       : student e-contracts (sign in the app), staff reset
 - attendance                      : class sessions, QR check-in, rosters
 - notifications                   : push tokens, in-app notifications
+- schedule_changes                : teacher-to-teacher class handover requests
 """
 
 
@@ -42,6 +43,7 @@ def register_blueprints(app):
     from .public import bp as public_bp
     from .quizzes import bp as quizzes_bp
     from .quizzes_staff import bp as quizzes_staff_bp
+    from .schedule_changes import bp as schedule_changes_bp
     from .student import bp as student_bp
     from .teacher import bp as teacher_bp
 
@@ -49,5 +51,5 @@ def register_blueprints(app):
                       admin_bp, payments_bp, ebarimt_bp,
                       learning_bp, learning_admin_bp, assignments_bp, assignments_staff_bp,
                       quizzes_bp, quizzes_staff_bp, account_bp, certificates_bp, contracts_bp,
-                      attendance_bp, notifications_bp):
+                      attendance_bp, notifications_bp, schedule_changes_bp):
         app.register_blueprint(blueprint)

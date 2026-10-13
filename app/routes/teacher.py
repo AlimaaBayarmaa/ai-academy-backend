@@ -1,6 +1,10 @@
-"""Teacher-facing router: a teacher's own schedule (staff may view any)."""
+"""Teacher-facing router: a teacher's own schedule (staff may view any).
+
+The dated-session view and class handover requests live in ``schedule_changes``.
+"""
 from flask import Blueprint, jsonify
 
+from app.services import schedule_changes
 from app.services import schedules as sched_svc
 from app.services.errors import ServiceError
 
@@ -17,4 +21,9 @@ def teacher_schedule(teacher_id):
     is_self = user.actor_type == "teacher" and user.actor_id == teacher_id
     if not (is_self or can_any("cohort:manage", "schedule:manage")):
         raise ServiceError(403, "forbidden")
-    return jsonify(teacher_id=teacher_id, cohorts=sched_svc.teacher_schedule(teacher_id))
+    return jsonify(
+        teacher_id=teacher_id,
+        cohorts=sched_svc.teacher_schedule(teacher_id),
+        # Sessions of other teachers' cohorts this teacher accepted to cover.
+        covering_sessions=schedule_changes.covering_sessions(teacher_id),
+    )

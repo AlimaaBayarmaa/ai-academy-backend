@@ -66,6 +66,7 @@ from .ledger import (  # noqa: F401
 )
 from .payment import PAYMENT_METHODS, PAYMENT_STATUSES, Payment  # noqa: F401
 from .refresh_token import RefreshToken  # noqa: F401
+from .schedule_change import SCHEDULE_CHANGE_STATUSES, ScheduleChangeRequest  # noqa: F401
 from .staff import STAFF_ROLES, Staff  # noqa: F401
 from .student import Student  # noqa: F401
 from .teacher import Teacher  # noqa: F401

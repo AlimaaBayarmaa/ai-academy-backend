@@ -183,6 +183,14 @@
     {
       "key": "cert_code",
       "value": ""
+    },
+    {
+      "key": "recipient_teacher_id",
+      "value": ""
+    },
+    {
+      "key": "schedule_change_id",
+      "value": ""
     }
   ],
   "item": [
@@ -2586,6 +2594,259 @@
                   "raw": "{\n  \"status\": \"excused\"\n}"
                 },
                 "description": "present | late | absent | excused"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Schedule change (handover)",
+          "description": "Teacher-to-teacher class handover requests. TEACHER token only (staff/students get 403). See docs/schedule_change_api_v1.md.",
+          "item": [
+            {
+              "name": "My sessions (own + covering)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/sessions?from=2026-10-01&to=2026-12-31",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "sessions"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-10-01"
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-12-31"
+                    }
+                  ]
+                },
+                "description": "Dated sessions: own cohorts (assignment_type=regular, covered_by) + accepted covers (assignment_type=covering)."
+              }
+            },
+            {
+              "name": "Eligible teachers for a session",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/sessions/{{session_id}}/eligible-teachers",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "sessions",
+                    "{{session_id}}",
+                    "eligible-teachers"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var j = pm.response.json();",
+                      "if (j.items && j.items[0]) pm.collectionVariables.set('recipient_teacher_id', j.items[0].id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Send request",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"{{session_id}}\",\n  \"recipient_teacher_id\": \"{{recipient_teacher_id}}\",\n  \"message\": null\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var j = pm.response.json();",
+                      "if (j.id != null) pm.collectionVariables.set('schedule_change_id', j.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Sent requests",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests?direction=sent&status=pending",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests"
+                  ],
+                  "query": [
+                    {
+                      "key": "direction",
+                      "value": "sent"
+                    },
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Received requests",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests?direction=received&status=pending",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests"
+                  ],
+                  "query": [
+                    {
+                      "key": "direction",
+                      "value": "received"
+                    },
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var j = pm.response.json();",
+                      "if (j.items && j.items[0]) pm.collectionVariables.set('schedule_change_id', j.items[0].id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Request detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests/{{schedule_change_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests",
+                    "{{schedule_change_id}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Accept (recipient)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests/{{schedule_change_id}}/accept",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests",
+                    "{{schedule_change_id}}",
+                    "accept"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Reject (recipient)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests/{{schedule_change_id}}/reject",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests",
+                    "{{schedule_change_id}}",
+                    "reject"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": null\n}"
+                }
+              }
+            },
+            {
+              "name": "Cancel (sender)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/teacher/schedule-change-requests/{{schedule_change_id}}/cancel",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "teacher",
+                    "schedule-change-requests",
+                    "{{schedule_change_id}}",
+                    "cancel"
+                  ]
+                }
               }
             }
           ]
