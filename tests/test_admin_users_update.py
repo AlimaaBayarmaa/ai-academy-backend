@@ -57,6 +57,46 @@ def test_update_blank_email_is_400(client, admin_headers, make_actor, segment):
     assert resp.get_json()["error"] == "email_required"
 
 
+@pytest.mark.parametrize("segment", SEGMENTS)
+@pytest.mark.parametrize("first_name", ["", "   ", None, 5])
+def test_update_blank_first_name_is_400_and_changes_nothing(
+        client, admin_headers, make_actor, db, segment, first_name):
+    # The same rule as the self-service edit (Issue #7): a blank name is refused.
+    account, _ = make_actor(segment)
+    pid = account.actor_id
+    before = _fresh(db, MODELS[segment], pid).first_name
+    resp = client.patch(f"/admin/{segment}/{pid}", headers=admin_headers,
+                        json={"first_name": first_name, "phone": "95000000"})
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "first_name_required"
+    db.session.rollback()  # requests share the fixture's app context; mimic teardown
+    profile = _fresh(db, MODELS[segment], pid)
+    assert profile.first_name == before
+    assert profile.phone != "95000000"
+
+
+@pytest.mark.parametrize("segment", SEGMENTS)
+def test_update_trims_first_name(client, admin_headers, make_actor, db, segment):
+    account, _ = make_actor(segment)
+    pid = account.actor_id
+    resp = client.patch(f"/admin/{segment}/{pid}", headers=admin_headers,
+                        json={"first_name": "  Renamed  "})
+    assert resp.status_code == 200
+    assert resp.get_json()["profile"]["first_name"] == "Renamed"
+    assert _fresh(db, MODELS[segment], pid).first_name == "Renamed"
+
+
+@pytest.mark.parametrize("segment", SEGMENTS)
+def test_update_without_first_name_keeps_it(client, admin_headers, make_actor, db, segment):
+    account, _ = make_actor(segment)
+    pid = account.actor_id
+    before = _fresh(db, MODELS[segment], pid).first_name
+    resp = client.patch(f"/admin/{segment}/{pid}", headers=admin_headers,
+                        json={"phone": "95000000"})
+    assert resp.status_code == 200
+    assert _fresh(db, MODELS[segment], pid).first_name == before
+
+
 def test_update_student_bad_birth_date(client, admin_headers, make_student):
     account, _ = make_student()
     resp = client.patch(f"/admin/students/{account.actor_id}", headers=admin_headers,

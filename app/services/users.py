@@ -63,6 +63,12 @@ def _extract_profile(cfg, data):
         if field not in data:
             continue
         value = data[field]
+        if field == "first_name":
+            # Same rule as the self-service edit (account/profile.py): trimmed,
+            # and required — a blank name breaks every screen that shows it.
+            value = value.strip() if isinstance(value, str) else ""
+            if not value:
+                raise ServiceError(400, "first_name_required")
         if field in cfg["date_fields"] and value not in (None, ""):
             try:
                 value = date.fromisoformat(value)

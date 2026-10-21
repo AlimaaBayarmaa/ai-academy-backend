@@ -61,6 +61,11 @@ def test_create_teacher_sets_bio(client, admin_headers, db):
     ({"email": "a@b.c", "first_name": "A"}, "email_and_password_required"),
     ({"password": "Secret123!", "first_name": "A"}, "email_and_password_required"),
     ({"email": "a@b.c", "password": "Secret123!"}, "first_name_required"),
+    # A blank name is no name: the same rule as the self-service edit (Issue #7).
+    ({"email": "a@b.c", "password": "Secret123!", "first_name": ""}, "first_name_required"),
+    ({"email": "a@b.c", "password": "Secret123!", "first_name": "   "}, "first_name_required"),
+    ({"email": "a@b.c", "password": "Secret123!", "first_name": None}, "first_name_required"),
+    ({"email": "a@b.c", "password": "Secret123!", "first_name": 5}, "first_name_required"),
     ({"email": "   ", "password": "Secret123!", "first_name": "A"}, "email_required"),
 ])
 def test_create_validates_required_fields(client, admin_headers, segment, payload, error):
@@ -68,6 +73,16 @@ def test_create_validates_required_fields(client, admin_headers, segment, payloa
     assert resp.status_code == 400
     assert resp.get_json()["error"] == error
     assert AuthAccount.query.count() == 1  # only the admin
+
+
+@pytest.mark.parametrize("segment", SEGMENTS)
+def test_create_trims_first_name(client, admin_headers, db, segment):
+    resp = client.post(f"/admin/{segment}", headers=admin_headers, json={
+        "email": "trim@example.com", "password": "Secret123!", "first_name": "  Saraa  ",
+    })
+    assert resp.status_code == 201
+    assert resp.get_json()["profile"]["first_name"] == "Saraa"
+    assert db.session.get(MODELS[segment], resp.get_json()["id"]).first_name == "Saraa"
 
 
 def test_create_student_rejects_bad_birth_date(client, admin_headers):
